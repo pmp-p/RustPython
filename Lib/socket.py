@@ -337,7 +337,8 @@ class socket(_socket.socket):
         if binary:
             return buffer
         text = io.TextIOWrapper(buffer, encoding, errors, newline)
-        text.mode = mode
+        # XXX RUSTPYTHON TODO: mutable TextIOWrapper.mode
+        # text.mode = mode
         return text
 
     if hasattr(os, 'sendfile'):
