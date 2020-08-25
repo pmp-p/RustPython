@@ -73,6 +73,12 @@ pub struct PyPathLike {
     mode: OutputMode,
 }
 
+impl AsRef<Path> for PyPathLike {
+    fn as_ref(&self) -> &Path {
+        &self.path
+    }
+}
+
 impl PyPathLike {
     pub fn new_str(path: String) -> Self {
         Self {
@@ -139,6 +145,11 @@ fn make_path<'a>(
 }
 
 impl IntoPyException for io::Error {
+    fn into_pyexception(self, vm: &VirtualMachine) -> PyBaseExceptionRef {
+        (&self).into_pyexception(vm)
+    }
+}
+impl IntoPyException for &'_ io::Error {
     fn into_pyexception(self, vm: &VirtualMachine) -> PyBaseExceptionRef {
         #[allow(unreachable_patterns)] // some errors are just aliases of each other
         let exc_type = match self.kind() {
