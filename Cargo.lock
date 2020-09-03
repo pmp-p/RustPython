@@ -1692,6 +1692,7 @@ version = "0.1.2"
 dependencies = [
  "adler32",
  "arr_macro",
+ "atty",
  "base64",
  "bitflags",
  "blake2",
