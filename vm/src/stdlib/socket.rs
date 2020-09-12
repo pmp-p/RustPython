@@ -704,14 +704,14 @@ where
 {
     match addr.to_socket_addrs() {
         Ok(mut sock_addrs) => {
-            if sock_addrs.len() == 0 {
+            if let Some(addr) = sock_addrs.next() {
+                Ok(addr.into())
+            } else {
                 let error_type = vm.class("_socket", "gaierror");
                 Err(vm.new_exception_msg(
                     error_type,
                     "nodename nor servname provided, or not known".to_owned(),
                 ))
-            } else {
-                Ok(sock_addrs.next().unwrap().into())
             }
         }
         Err(e) => {

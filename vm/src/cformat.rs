@@ -438,13 +438,13 @@ impl CFormatString {
                 Some(CFormatQuantity::FromValuesTuple) => match elements.next() {
                     Some(width_obj) => {
                         tuple_index += 1;
-                        if !objtype::isinstance(&width_obj, &vm.ctx.types.int_type) {
-                            Err(vm.new_type_error("* wants int".to_owned()))
-                        } else {
+                        if objtype::isinstance(&width_obj, &vm.ctx.types.int_type) {
                             let i = objint::get_value(&width_obj);
                             let i = objint::try_to_primitive::<isize>(i, vm)? as usize;
                             *q = Some(CFormatQuantity::Amount(i));
                             Ok(tuple_index)
+                        } else {
+                            Err(vm.new_type_error("* wants int".to_owned()))
                         }
                     }
                     None => {
