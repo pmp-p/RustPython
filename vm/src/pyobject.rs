@@ -113,7 +113,7 @@ pub struct PyNotImplemented;
 
 impl PyValue for PyNotImplemented {
     fn class(vm: &VirtualMachine) -> PyClassRef {
-        vm.ctx.not_implemented().class()
+        vm.ctx.not_implemented.class()
     }
 }
 
@@ -1401,6 +1401,26 @@ impl TryFromObject for std::time::Duration {
 }
 
 result_like::option_like!(pub PyArithmaticValue, Implemented, NotImplemented);
+
+impl PyArithmaticValue<PyObjectRef> {
+    pub fn from_object(vm: &VirtualMachine, obj: PyObjectRef) -> Self {
+        if obj.is(&vm.ctx.not_implemented) {
+            Self::NotImplemented
+        } else {
+            Self::Implemented(obj)
+        }
+    }
+}
+
+impl<T: TryFromObject> TryFromObject for PyArithmaticValue<T> {
+    fn try_from_object(vm: &VirtualMachine, obj: PyObjectRef) -> PyResult<Self> {
+        let arith = match PyArithmaticValue::from_object(vm, obj) {
+            PyArithmaticValue::Implemented(x) => Self::Implemented(T::try_from_object(vm, x)?),
+            PyArithmaticValue::NotImplemented => Self::NotImplemented,
+        };
+        Ok(arith)
+    }
+}
 
 impl<T> IntoPyObject for PyArithmaticValue<T>
 where
