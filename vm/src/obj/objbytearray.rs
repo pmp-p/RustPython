@@ -20,6 +20,7 @@ use crate::pyobject::{
     PyObjectRef, PyRef, PyResult, PyValue, TryFromObject,
 };
 use crate::pystr::{self, PyCommonString};
+use crate::slots::{Comparable, PyComparisonOp};
 use crate::vm::VirtualMachine;
 
 /// "bytearray(iterable_of_ints) -> bytearray\n\
@@ -92,7 +93,7 @@ pub(crate) fn init(context: &PyContext) {
     PyByteArrayIterator::extend_class(context, &context.types.bytearray_iterator_type);
 }
 
-#[pyimpl(flags(BASETYPE))]
+#[pyimpl(flags(BASETYPE), with(Comparable))]
 impl PyByteArray {
     #[pyslot]
     fn tp_new(
@@ -116,36 +117,6 @@ impl PyByteArray {
     #[pymethod(name = "__sizeof__")]
     fn sizeof(&self) -> usize {
         size_of::<Self>() + self.borrow_value().len() * size_of::<u8>()
-    }
-
-    #[pymethod(name = "__eq__")]
-    fn eq(&self, other: PyObjectRef, vm: &VirtualMachine) -> PyComparisonValue {
-        self.borrow_value().eq(other, vm)
-    }
-
-    #[pymethod(name = "__ne__")]
-    fn ne(&self, other: PyObjectRef, vm: &VirtualMachine) -> PyComparisonValue {
-        self.borrow_value().ne(other, vm)
-    }
-
-    #[pymethod(name = "__ge__")]
-    fn ge(&self, other: PyObjectRef, vm: &VirtualMachine) -> PyComparisonValue {
-        self.borrow_value().ge(other, vm)
-    }
-
-    #[pymethod(name = "__le__")]
-    fn le(&self, other: PyObjectRef, vm: &VirtualMachine) -> PyComparisonValue {
-        self.borrow_value().le(other, vm)
-    }
-
-    #[pymethod(name = "__gt__")]
-    fn gt(&self, other: PyObjectRef, vm: &VirtualMachine) -> PyComparisonValue {
-        self.borrow_value().gt(other, vm)
-    }
-
-    #[pymethod(name = "__lt__")]
-    fn lt(&self, other: PyObjectRef, vm: &VirtualMachine) -> PyComparisonValue {
-        self.borrow_value().lt(other, vm)
     }
 
     #[pymethod(name = "__hash__")]
@@ -562,6 +533,20 @@ impl PyByteArray {
     #[pymethod]
     fn decode(zelf: PyRef<Self>, args: DecodeArgs, vm: &VirtualMachine) -> PyResult<PyStringRef> {
         bytes_decode(zelf.into_object(), args, vm)
+    }
+}
+
+impl Comparable for PyByteArray {
+    fn cmp(
+        zelf: PyRef<Self>,
+        other: PyObjectRef,
+        op: PyComparisonOp,
+        vm: &VirtualMachine,
+    ) -> PyResult<PyComparisonValue> {
+        if op == PyComparisonOp::Eq && zelf.is(&other) {
+            return Ok(PyComparisonValue::Implemented(true));
+        }
+        Ok(zelf.borrow_value().cmp(other, op, vm))
     }
 }
 
