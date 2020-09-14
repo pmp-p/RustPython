@@ -1,7 +1,9 @@
 use super::objtype::PyClassRef;
 use crate::pyobject::{
-    IntoPyObject, PyClassImpl, PyContext, PyObjectRef, PyRef, PyResult, PyValue, TypeProtocol,
+    IdProtocol, IntoPyObject, PyClassImpl, PyComparisonValue, PyContext, PyObjectRef, PyRef,
+    PyResult, PyValue, TypeProtocol,
 };
+use crate::slots::{Comparable, PyComparisonOp};
 use crate::vm::VirtualMachine;
 
 #[pyclass(module = false, name = "NoneType")]
@@ -48,23 +50,16 @@ impl PyNone {
     fn bool(&self) -> PyResult<bool> {
         Ok(false)
     }
+}
 
-    #[pymethod(name = "__eq__")]
-    fn eq(&self, rhs: PyObjectRef, vm: &VirtualMachine) -> PyObjectRef {
-        if vm.is_none(&rhs) {
-            vm.ctx.new_bool(true)
-        } else {
-            vm.ctx.not_implemented()
-        }
-    }
-
-    #[pymethod(name = "__ne__")]
-    fn ne(&self, rhs: PyObjectRef, vm: &VirtualMachine) -> PyObjectRef {
-        if vm.is_none(&rhs) {
-            vm.ctx.new_bool(false)
-        } else {
-            vm.ctx.not_implemented()
-        }
+impl Comparable for PyNone {
+    fn cmp(
+        zelf: PyRef<Self>,
+        other: PyObjectRef,
+        op: PyComparisonOp,
+        _vm: &VirtualMachine,
+    ) -> PyResult<PyComparisonValue> {
+        op.eq_only(|| Ok(zelf.is(&other).into()))
     }
 }
 
